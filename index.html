@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bussola Suoni</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007bff">
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f5f5f5; }
+    h1 { font-size: 1.5rem; }
+    #heading { font-size: 2rem; margin: 10px 0; }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; }
+    button:disabled { background: #999; }
+    ul { list-style: none; padding: 0; }
+    li { background: white; margin: 5px 0; padding: 8px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>🎧 Bussola Suoni</h1>
+  <p>Orienta il telefono verso il suono e premi "Registra".</p>
+  <div id="heading">--°</div>
+  <button id="recordBtn" disabled>Registra</button>
+  <h2>Storico</h2>
+  <ul id="log"></ul>
+  <script>
+    const headingEl = document.getElementById("heading");
+    const recordBtn = document.getElementById("recordBtn");
+    const logEl = document.getElementById("log");
+    function getDirection(deg) { const dirs = ["Nord","Nord-Est","Est","Sud-Est","Sud","Sud-Ovest","Ovest","Nord-Ovest"]; return dirs[Math.round(deg/45)%8]; }
+    let log = JSON.parse(localStorage.getItem("bussolaLog") || "[]");
+    renderLog();
+    window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+    window.addEventListener("deviceorientation", handleOrientation, true);
+    function handleOrientation(event) { let deg = event.alpha; if(deg!=null){ headingEl.textContent=`${Math.round(deg)}° (${getDirection(deg)})`; recordBtn.disabled=false; recordBtn.onclick=()=>saveReading(deg); } }
+    function saveReading(deg) { const entry={time:new Date().toLocaleString(),deg:Math.round(deg),dir:getDirection(deg)}; log.push(entry); localStorage.setItem("bussolaLog",JSON.stringify(log)); renderLog(); }
+    function renderLog() { logEl.innerHTML=""; log.forEach(e=>{ const li=document.createElement("li"); li.textContent=`${e.time} → ${e.dir} (${e.deg}°)`; logEl.appendChild(li); }); }
+    if("serviceWorker" in navigator){ navigator.serviceWorker.register("service-worker.js").then(()=>console.log("Service Worker registrato")).catch(err=>console.error("Errore Service Worker:",err)); }
+  </script>
+</body>
+</html>
